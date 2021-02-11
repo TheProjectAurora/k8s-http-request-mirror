@@ -13,7 +13,7 @@ ENDPOINT_NAME = os.getenv('ENDPOINT_NAME')
 PORT_NAME = os.getenv('PORT_NAME')
 
 def call_ip(ip, port, url):
-    full_url = f'Calling http://{ip}:{port}/{url}'
+    full_url = f'http://{ip}:{port}/{url}'
     print(f'{full_url}')
     requests.get(full_url)
 
