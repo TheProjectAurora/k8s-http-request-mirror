@@ -14,10 +14,7 @@ RUN set -xe && \
         py3-pip && \
     pip install -r /tmp/requirements.txt && \
     addgroup -g ${GID} -S ${GROUP} && \
-    adduser -u ${UID} -S -D ${USER} ${GROUP} && \
-    mkdir /app && chown ${USER} /app
-
-
+    adduser -u ${UID} -S -D ${USER} ${GROUP}
 COPY --chown=${USER} k8sci/ /app/k8sci/
 WORKDIR /app
 USER ${USER}
