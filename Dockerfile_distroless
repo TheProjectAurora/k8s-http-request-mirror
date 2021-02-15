@@ -1,0 +1,19 @@
+FROM  python:3.7-slim AS build
+COPY requirements.txt /tmp/requirements.txt
+RUN set -xe && \
+    echo $(echo BUILD_TIME_ALPINE_VERSION: && /bin/cat /etc/alpine-release) && \
+    pip install -r /tmp/requirements.txt && \
+    mkdir /app 
+COPY ./entrypoint.sh /app/entrypoint.sh
+COPY k8sci/ /app/k8sci/
+
+### INFO: 
+# What is distroless: https://medium.com/better-programming/how-to-harden-your-containers-with-distroless-docker-images-c2abd7c71fdb
+# Google Base Images: https://github.com/GoogleContainerTools/distroless/
+FROM gcr.io/distroless/python3-debian10
+COPY --from=build /app /app
+COPY --from=build /usr/local/bin/gunicorn /app/gunicorn
+COPY --from=build /usr/local/lib/python3.7/site-packages /usr/local/lib/python3.7/site-packages
+WORKDIR /app
+ENV PYTHONPATH=/usr/local/lib/python3.7/site-packages PYTHONUNBUFFERED=TRUE
+CMD ["gunicorn","--bind","0.0.0.0:5000","--enable-stdio-inheritance","--error-logfile","-","k8sci.wsgi:app"]
