@@ -1,0 +1,15 @@
+FROM python:3.7-slim AS build
+COPY requirements.txt /tmp/requirements.txt
+RUN  pip install -r /tmp/requirements.txt
+
+### INFO: 
+# What is distroless: https://medium.com/better-programming/how-to-harden-your-containers-with-distroless-docker-images-c2abd7c71fdb
+# Google Base Images: https://github.com/GoogleContainerTools/distroless/
+FROM gcr.io/distroless/python3-debian10
+COPY --chown=nonroot k8sci/ /app/k8sci/
+COPY --from=build --chown=nonroot /usr/local/bin/gunicorn /app/gunicorn
+COPY --from=build --chown=nonroot /usr/local/lib/python3.7/site-packages /usr/local/lib/python3.7/site-packages
+USER nonroot
+WORKDIR /app
+ENV PYTHONPATH=/usr/local/lib/python3.7/site-packages PYTHONUNBUFFERED=TRUE
+CMD ["gunicorn","--bind","0.0.0.0:5000","--enable-stdio-inheritance","--error-logfile","-","k8sci.wsgi:app"]

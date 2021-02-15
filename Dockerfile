@@ -1,12 +1,11 @@
 FROM alpine:latest
 
-ARG USER=notroot
-ARG GROUP=notroot
+ARG USER=nonroot
+ARG GROUP=nonroot
 ARG UID=1000
 ARG GID=1000
 
 COPY requirements.txt /tmp/requirements.txt
-COPY ./entrypoint.sh /usr/bin/entrypoint.sh
 RUN set -xe && \
     echo $(echo BUILD_TIME_ALPINE_VERSION: && /bin/cat /etc/alpine-release) && \
     apk upgrade --no-cache && \
@@ -15,13 +14,11 @@ RUN set -xe && \
         py3-pip && \
     pip install -r /tmp/requirements.txt && \
     addgroup -g ${GID} -S ${GROUP} && \
-    adduser -u ${UID} -S -D ${USER} ${GROUP} && \
-    chmod a+x /usr/bin/entrypoint.sh && \
-    mkdir /app && chown ${USER} /app
-
-
+    adduser -u ${UID} -S -D ${USER} ${GROUP}
 COPY --chown=${USER} k8sci/ /app/k8sci/
 WORKDIR /app
 USER ${USER}
+ENV PYTHONUNBUFFERED=TRUE
 
-ENTRYPOINT /usr/bin/entrypoint.sh
+ENTRYPOINT echo $(echo ALPINE_VERSION: && /bin/cat /etc/alpine-release) && \
+           gunicorn --bind 0.0.0.0:5000 --enable-stdio-inheritance --error-logfile "-"  k8sci.wsgi:app
